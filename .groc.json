@@ -1,4 +1,4 @@
 {
-	"glob": ["server.js", "worker.js"],
+	"glob": ["bot.js", "web.js", "worker.js"],
 	"out": "docs"
 }

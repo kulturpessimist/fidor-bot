@@ -67,13 +67,25 @@ bot.hears('Show my account balance', function(ctx){
     console.log(ctx.message);
 
     com.getAccountBalance(ctx.chat.id, function(balance){
-        return ctx.reply( 'Dein Kontostand beträgt: ' + balance, operation);
+        return ctx.reply( 'Dein Kontostand beträgt: ' + balance + ' €', operation);
     });
 });
 
 bot.hears('Show last transactions', function(ctx){
     console.log(ctx.message);
-    return ctx.reply('soon...', operation);
+        return ctx.reply( 'OK mal sehen was da so alles los war...', operation)
+            .then(function(){
+                com.getLastTransactions(ctx.chat.id, 10, function(transactions){
+                    var resp = "```\n";
+                    resp += "Datum      Betrag        Art      Betref\n\n";
+                    for(var i in transactions){
+                        resp += transactions[i].date+"\t"+transactions[i].amount+"\t"+transactions[i].type+"\t"+transactions[i].subject+"\n";
+                    }
+                    resp += "```";
+                    ctx.replyWithMarkdown( resp, operation)
+                });
+
+            });
 });
 
 bot.hears('Logout', function(ctx){

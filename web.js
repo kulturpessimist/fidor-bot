@@ -51,52 +51,18 @@ app.get('/oauth', function(request, response) {
 
 	var code	= request.query.code,
 		id	    = request.query.cid;
-
-	unirest.post( app.get('FIDOR_AUTH_URL') + '/token' )
-		.auth( app.get('FIDOR_OAUTH_CLIENT_ID'), app.get('FIDOR_OAUTH_CLIENT_SECRET'), true )
-		.send('code=' + code )
-		.send('client_id=' + app.get('FIDOR_OAUTH_CLIENT_ID') )
-		.send('redirect_uri=' + encodeURIComponent( "http://" + request.headers.host + "/oauth?cid=" + id ) )
-		.send('grant_type=authorization_code')
-		.end( function(oauth_response){
-			oauth_response.body.issued = Math.round(Date.now() / 1000);    
-            console.log( 'TOKEN ->', oauth_response.body );
-            
-            com.saveAccountInCouch({
-                _id: id,
-                token: oauth_response.body 
-            }, function(){
-                app._bot.onLoginSuccess(id);
-            }.bind(this) );
-			//request.session.token = JSON.stringify( oauth_response.body );
-			response.writeHead( 307, { "location": "/close" } );
-			response.end();
-		});
+    
+    com.createToken(id, code, "http://" + request.headers.host + "/oauth?cid=", function(){
+        app._bot.onLoginSuccess();
+        response.writeHead( 307, { "location": "/close" } );
+        response.end();
+    });
 });
 
 app.get('/close', function(request, response) {
-    return "It's save to close the window now...";
+	response.render('close', {});
 });
 
-/*
-app.get('/refresh', function(request, response) {
-	var token = JSON.parse(request.session.token),
-		rt = token.refresh_token;
-
-	var r = unirest.post( app.get('FIDOR_AUTH_URL') + '/token' )
-		.auth( app.get('FIDOR_OAUTH_CLIENT_ID'), app.get('FIDOR_OAUTH_CLIENT_SECRET'), true )
-		.send('refresh_token=' + rt )
-		.send('state=' +  app.get('STATE') )
-		.send('grant_type=refresh_token')
-		.end( function(oauth_response){
-			console.log( 'Refreshed TOKEN ->', oauth_response.body );
-			oauth_response.body.issued = Math.round(Date.now() / 1000);
-			response.writeHead( 307, { 'location': '/account' } );
-			response.end();
-		});
-
-});
-*/
 // ##############
 
 app.listen(app.get('port'), function() {
