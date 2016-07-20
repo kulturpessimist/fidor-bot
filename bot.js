@@ -41,7 +41,7 @@ bot.hears('/start', function(ctx){
         .then(function(){
             return ctx.reply( "Log dich hierzu einfach mit deinem Fidor Account ein und los geht's. Du kannst den Zugriff jederzeit wiederrufen.", extra.HTML().markup(
                 markup.inlineKeyboard([
-                    { text: 'Login', url: 'http://0.0.0.0:5000/login?id='+ctx.chat.id }
+                    { text: 'Login', url: process.env.BOT_OAUTH+ctx.chat.id }
                 ])
             ));
         });
