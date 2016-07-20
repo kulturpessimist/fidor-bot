@@ -7,7 +7,7 @@ var bot         = new Telegraf( process.env.TELEGRAM_TOKEN ),
 
 if(process.env.NODE_ENV === 'production') {
     bot.useWebhook = true;
-    bot.telegram.setWebhook( process.env.BOT_URL + process.env.TELEGRAM_TOKEN );
+    bot.telegram.setWebHook( process.env.BOT_URL + process.env.TELEGRAM_TOKEN );
 }else{
     bot.useWebhook = false;
     bot.startPolling();
