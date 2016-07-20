@@ -7,6 +7,7 @@ var bot         = new Telegraf( process.env.TELEGRAM_TOKEN ),
 
 if(process.env.NODE_ENV === 'production') {
     bot.useWebhook = true;
+    bot.telegram.setWebhook( process.env.BOT_URL + process.env.TELEGRAM_TOKEN );
 }else{
     bot.useWebhook = false;
     bot.startPolling();
@@ -41,7 +42,7 @@ bot.hears('/start', function(ctx){
         .then(function(){
             return ctx.reply( "Log dich hierzu einfach mit deinem Fidor Account ein und los geht's. Du kannst den Zugriff jederzeit wiederrufen.", extra.HTML().markup(
                 markup.inlineKeyboard([
-                    { text: 'Login', url: process.env.BOT_OAUTH+ctx.chat.id }
+                    { text: 'Login', url: process.env.BOT_URL + "login?id=" + ctx.chat.id }
                 ])
             ));
         });
