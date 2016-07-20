@@ -1,14 +1,10 @@
 var unirest		= require('unirest'),
-    numeral     = require('numeral'),
-    numeralLang = require('numeral/languages/de');
-
-numeral.language('de', numeralLang);
-numeral.language('de');
+    Promise     = require('bluebird'),
+    format      = require('number-format.js');
 
 /**
  * @TODO: Promise all the things...
  *   */
-
 
 var com = {
     _session: {},
@@ -21,7 +17,7 @@ var com = {
                 com._session = JSON.parse(response.body);
                 console.log( 'checkSession', com._session );
                 // now check the session data...
-                if( session.hasOwnProperty('token') ){
+                if( com._session.hasOwnProperty('token') ){
                     console.log('Token', com._session.token);
                     if( com._session.token.access_token.length > 0 ){ // token was set sometime in the past
                         var now = Math.round( Date.now() / 1000 ),
@@ -50,14 +46,14 @@ var com = {
             .auth( process.env.FIDOR_OAUTH_CLIENT_ID, process.env.FIDOR_OAUTH_CLIENT_SECRET, true )
             .send('code=' + code )
             .send('client_id=' + process.env.FIDOR_OAUTH_CLIENT_ID )
-            .send('redirect_uri=' + encodeURIComponent(  + cid ) )
+            .send('redirect_uri=' + encodeURIComponent( uri + cid ) )
             .send('grant_type=authorization_code')
             .end( function(oauth_response){
                 oauth_response.body.issued = Math.round(Date.now() / 1000);    
                 console.log( 'TOKEN ->', oauth_response.body );
                 
                 com.saveAccountInCouch({
-                    _id: id,
+                    _id: cid,
                     token: oauth_response.body,
                     account: []
                 }, callback );
@@ -103,7 +99,7 @@ var com = {
                     .type('json')
                     .send(doc)
                     .end( function(couch_response){
-                        console.log( 'PUT SUCCESSFUL' );
+                        console.log( 'PUT SUCCESSFUL', couch_response.body );
                         callback();
                     });
             });
@@ -124,7 +120,14 @@ var com = {
                     if(r.body.hasOwnProperty('errors') ){
                         // handle Error
                     }else{
-                        var result = numeral(r.body.data[0].balance).format('0.00 €');
+                        var account = {
+                            id: r.body.data[0].id,
+                            balance: r.body.data[0].balance,
+                            currency: r.body.data[0].balance,
+                            update: r.body.data[0].updated_at
+                        }
+
+                        var result = format("#.###,00 €", r.body.data[0].balance/100);
                         callback(result);
                     }
                 });
@@ -149,7 +152,7 @@ var com = {
                             resp.push( {
                                 type: e.transaction_type,
                                 subject: e.subject,
-                                amount: numeral(e.amount).format('0.00 €'),
+                                amount: format("#.###,00 €", e.amount/100),
                                 date: e.value_date
                             } );
                             //console.log(i, r.body.data[i])

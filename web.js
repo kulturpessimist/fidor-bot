@@ -1,8 +1,7 @@
 // ###
-var express     = require('express');
-var bodyParser 	= require('body-parser');
-var unirest		= require('unirest');
-var com         = require('./communication');
+var express     = require('express'),
+	bodyParser 	= require('body-parser'),
+	com         = require('./communication');
 // ## EXPRESS
 
 var app = express();
@@ -15,29 +14,21 @@ app.set('port', (process.env.PORT || 5000));
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 
-app.set('CLOUDANT_KEY', 			process.env.CLOUDANT_KEY );
-app.set('CLOUDANT_PASSWORD',		process.env.CLOUDANT_PASSWORD );
-app.set('CLOUDANT_URL', 			process.env.CLOUDANT_URL );
-app.set('FIDOR_OAUTH_CLIENT_ID',	process.env.FIDOR_OAUTH_CLIENT_ID );
-app.set('FIDOR_OAUTH_CLIENT_SECRET',process.env.FIDOR_OAUTH_CLIENT_SECRET );
-app.set('FIDOR_AUTH_URL', 			process.env.FIDOR_AUTH_URL );
-app.set('FIDOR_API_URL', 			process.env.FIDOR_API_URL );
-app.set('TELEGRAM_TOKEN', 			process.env.TELEGRAM_TOKEN );
-
 app.set('STATE', 					Math.random() );
 
 // ##############
 
 app.get('/', function(request, response) {
+	console.log('+++INDEX');
 	response.render('index');
 });
 
 app.get('/login', function(request, response) {
-	console.log('LOGIN');
+	console.log('+++LOGIN');
     
     var id        = request.query.id,
-	    oauth_url = app.get('FIDOR_AUTH_URL') + '/authorize' +
-					'?client_id=' + app.get('FIDOR_OAUTH_CLIENT_ID') +
+	    oauth_url = process.env.FIDOR_AUTH_URL + '/authorize' +
+					'?client_id=' + process.env.FIDOR_OAUTH_CLIENT_ID +
 					'&state=' + app.get('STATE') +
 					'&response_type=code' +
 					'&redirect_uri=' + encodeURIComponent( 'http://' + request.headers.host + '/oauth?cid='+id );
@@ -47,30 +38,31 @@ app.get('/login', function(request, response) {
 });
 
 app.get('/oauth', function(request, response) {
-    console.log('OAUTH');
+    console.log('+++OAUTH');
 
 	var code	= request.query.code,
 		id	    = request.query.cid;
     
     com.createToken(id, code, "http://" + request.headers.host + "/oauth?cid=", function(){
-        app._bot.onLoginSuccess();
+        app._bot.onLoginSuccess(id);
         response.writeHead( 307, { "location": "/close" } );
         response.end();
     });
 });
 
 app.get('/close', function(request, response) {
+    console.log('+++CLOSE');
 	response.render('close', {});
 });
 
 // ##############
 
 app.listen(app.get('port'), function() {
-	console.log('Node app is running on port', app.get('port'));
+	console.log('___Node app is running on port', app.get('port'));
 });
 
 module.exports = function (bot){
-    console.log("Webook?", bot.useWebhook);
+    console.log("___Webook?", bot.useWebhook);
     app._bot = bot;
     if(bot.useWebhook){
         app.use( bot.webHookCallback('/'+bot.token) );
